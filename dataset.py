@@ -66,26 +66,6 @@ def get_atom_features(atom) -> List[Union[bool, int, float]]:
     :param atom: An RDKit atom
     :return: A list containing the atom features
     '''
-    # # --- For a shorter feature vector
-    # num_Os = 0
-    # if atom is None:
-    #     features = [0] * ATOM_FDIM
-    # else:
-    #     for a in atom.GetNeighbors():
-    #         if a.GetAtomicNum() == 8:
-    #             num_Os += 1.0
-
-    #     if atom.GetHybridization() == Chem.rdchem.HybridizationType.SP2:
-    #         hybrid = 2.0
-    #     elif atom.GetHybridization() == Chem.rdchem.HybridizationType.SP3:
-    #         hybrid = 3.0
-
-    #     if atom.GetIsAromatic() == True:
-    #         aroma = 1.0
-    #     elif atom.GetIsAromatic() == False:
-    #         aroma = 0.0
-
-    #     features = atom.GetAtomicNum(), atom.GetDegree(), atom.GetTotalNumHs(), hybrid, aroma
 
     # --- For one-hot encoding featue vector
     num_Os = 0
@@ -95,6 +75,10 @@ def get_atom_features(atom) -> List[Union[bool, int, float]]:
         for a in atom.GetNeighbors():
             if a.GetAtomicNum() == 8:
                 num_Os += 1.0
+        # features = one_hot_encoding(atom.GetAtomicNum(), ATOM_FEATURES['atomic_num']) + \
+        #     [atom.GetDegree()] + [atom.GetTotalNumHs()] + [num_Os] + \
+        #     one_hot_encoding(atom.GetHybridization(), ATOM_FEATURES['hybridization']) + \
+        #     [1 if atom.GetIsAromatic() else 0]
         # --- Get the values of all the atom features and add all up to the feature vector
         features = one_hot_encoding(atom.GetAtomicNum(), ATOM_FEATURES['atomic_num']) + \
             one_hot_encoding(atom.GetDegree(), ATOM_FEATURES['degree']) + \
@@ -117,24 +101,6 @@ def get_bond_features(bond) -> List[Union[bool, int, float]]:
         fbond = [1] + [0] * (BOND_FDIM - 1)
     else:
         bt = bond.GetBondType()
-        # --- Create a short bond vector
-        # if bt == Chem.rdchem.BondType.SINGLE:
-        #     typ = 1.0
-        # elif bt == Chem.rdchem.BondType.DOUBLE:
-        #     typ = 2.0
-        # elif bt == Chem.rdchem.BondType.AROMATIC:
-        #     typ = 3.0
-
-        # if bond.GetIsConjugated() == True:
-        #     conj = 1.0
-        # else:
-        #     conj = 0.0
-
-        # if bond.IsInRing() == True:
-        #     ring = 1.0
-        # else:
-        #     ring = 0.0
-        # fbond = [ typ, conj, ring]
         # --- Creat one-hot bond vector
         fbond = [
             int(bt == Chem.rdchem.BondType.SINGLE),
