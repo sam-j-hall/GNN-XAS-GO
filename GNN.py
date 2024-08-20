@@ -1,7 +1,7 @@
 import torch
 from torch_geometric.nn import MessagePassing
 from torch_geometric.nn import global_add_pool, global_mean_pool, global_max_pool, GlobalAttention, Set2Set
-from torch_geometric.nn import GCNConv,GINConv,GINEConv,GATv2Conv,MLP,SAGEConv
+from torch_geometric.nn import GCNConv,SuperGATConv,GINConv,GINEConv,GATv2Conv,MLP,SAGEConv
 import torch.nn.functional as F
 from torch.nn import ModuleList, Dropout, Linear
 
@@ -109,8 +109,8 @@ class GNN_node(torch.nn.Module):
                 mlp = MLP([in_c, in_c, out_c])
                 self.convs.append(GINConv(nn=mlp, train_eps=False))
             if gnn_type == 'gine':
-                mlp = MLP([in_c, in_c, out_c])
-                self.convs.append(GINEConv(nn=mlp, train_eps=False, edge_dim=5))
+                mlp = MLP([in_c, out_c, out_c])
+                self.convs.append(GINEConv(nn=mlp, eps=0.5, train_eps=True, edge_dim=5))
             elif gnn_type == 'gcn':
                 self.convs.append(GCNConv(in_c, out_c))
             elif gnn_type == 'gat':
