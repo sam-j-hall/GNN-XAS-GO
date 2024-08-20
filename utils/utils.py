@@ -100,10 +100,10 @@ def bokeh_spectra(ml_spectra, true_spectra):
 
     return p
 
-def bokeh_hist(hist, edges, average, spacing):
+def bokeh_hist(dataframe, average):
     p = figure(
         x_axis_label = 'RSE value', y_axis_label = 'Frequency',
-        x_range = (edges[0], edges[-1]), y_range = (0, max(hist)+spacing),
+        # x_range = (edges[0], edges[-1]), y_range = (0, max(hist)+spacing),
         width = 500, height = 450,
         outline_line_color = 'black', outline_line_width = 2
     )
@@ -146,7 +146,8 @@ def bokeh_hist(hist, edges, average, spacing):
 
     # --- Plot data
     # --- Add histogram
-    p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:], fill_color='skyblue', line_color='black')
+    p.quad(bottom=0, top=dataframe['rse_value'], left=dataframe['left'], right=dataframe['right'],
+           fill_color='skyblue', line_color='black')
     # --- Add average line
     vline = Span(location=average, dimension='height', line_color='black', line_width=3, line_dash='dashed')
     p.renderers.extend([vline])
