@@ -5,9 +5,10 @@ import numpy as np
 import networkx as nx
 import torch
 from rdkit import Chem
-from torch_geometric.data import InMemoryDataset
+from torch_geometric.data import InMemoryDataset, Dataset
 from torch_geometric.utils.convert import from_networkx
 from typing import List, Union
+from torch_geometric.data.data import Data
 
 # --- Class variables
 ATOM_FEATURES = {
@@ -151,12 +152,12 @@ class XASDataset_mol(InMemoryDataset):
  
     @property
     def raw_file_names(self):
-        return ['data_coronene_rdkit_idx.json']
-        # return ['data_circumcoronene_rdkit_idx.json']
+        return ['data_coronene_schnet.json']
+        # return ['data_circumcoronene_schnet.json']
 
     @property
     def processed_file_names(self):
-        return ['data_mol.pt']
+        return ['cor_pyg.pt']
     
     def process(self):
         '''
@@ -179,16 +180,16 @@ class XASDataset_mol(InMemoryDataset):
         
         for name in all_names:
             # --- 
-            smiles = dictionaires[0][name]
+            smiles = dictionaires[0][name][0]
             mol = Chem.MolFromSmiles(smiles)
             # ---
             atom_spec = dictionaires[1][name]
  
             # --- Create arrays of dataset
-            # pos = dictionaires[0][name][1]
-            # positions = np.array(pos)
-            # z_num = dictionaires[0][name][2]
-            # z = np.array(z_num)
+            pos = dictionaires[0][name][1]
+            positions = np.array(pos)
+            z_num = dictionaires[0][name][2]
+            z = np.array(z_num)
             atom_count = count_atoms(mol, 6)
 
             tot_spec = np.zeros(len(atom_spec[str(0)]))
@@ -197,12 +198,18 @@ class XASDataset_mol(InMemoryDataset):
                 # --- Sum up all atomic spectra
                 tot_spec += atom_spec[key]
 
-            # --- Create graph object
-            gx = mol_to_nx(mol, tot_spec, atom_rep=False)
-            # --- Convert to pyg
-            pyg_graph = from_networkx(gx)
+            # --- Create graph objects
+            # --- For schnet models
+            # dict = {}
+            # dict['x'] = None
+            # pyg_graph = Data.from_dict(dict)
             # pyg_graph.pos = torch.from_numpy(positions)
             # pyg_graph.z = torch.from_numpy(z)
+
+            # --- For PyG models
+            gx = mol_to_nx(mol, tot_spec, atom_rep=False)
+            pyg_graph = from_networkx(gx)
+
             pyg_graph.idx = idx
             pyg_graph.smiles = smiles
             data_list.append(pyg_graph)
@@ -218,4 +225,3 @@ class XASDataset_mol(InMemoryDataset):
 
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
-    
