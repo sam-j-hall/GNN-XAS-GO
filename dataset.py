@@ -34,13 +34,13 @@ def mol_to_nx(mol, spec, atom_rep=True):
 
     # --- Create graph object
     G = nx.Graph()
-        
+
     # --- For each atom in molecule
     for atom in mol.GetAtoms():
         # --- Add a node to graph and create one-hot encoding vector for atom features
         map_num = atom.GetAtomMapNum()
         G.add_node(map_num, x=get_atom_features(atom))
-            
+
     # --- For each bond in molecule
     for bond in mol.GetBonds():
         # ---
@@ -57,9 +57,9 @@ def mol_to_nx(mol, spec, atom_rep=True):
         norm_spec = 1.0 * (spec / max_intensity)
         # --- Set spectra to graph
         G.graph['spectrum'] = torch.FloatTensor(norm_spec)
-        
+
     return G
-    
+
 def get_atom_features(atom) -> List[Union[bool, int, float]]:
     '''
     Builds a feature vector for an atom
@@ -76,19 +76,20 @@ def get_atom_features(atom) -> List[Union[bool, int, float]]:
         for a in atom.GetNeighbors():
             if a.GetAtomicNum() == 8:
                 num_Os += 1.0
+        # --- For a shorter feature vector with less one-hot encoding
+        features = [atom.GetAtomicNum()] + [atom.GetTotalNumHs()] + \
+            one_hot_encoding(atom.GetHybridization(), ATOM_FEATURES['hybridization']) + \
+            [1 if atom.GetIsAromatic() else 0] + \
+            [1 if atom.IsInRing() else 0]
+
+        # # --- For a full one-hot encoding feature vector
         # features = one_hot_encoding(atom.GetAtomicNum(), ATOM_FEATURES['atomic_num']) + \
-        #     [atom.GetDegree()] + [atom.GetTotalNumHs()] + [num_Os] + \
+        #     one_hot_encoding(atom.GetTotalNumHs(), ATOM_FEATURES['num_Hs']) + \
+        #     one_hot_encoding(num_Os, ATOM_FEATURES['num_Os']) + \
         #     one_hot_encoding(atom.GetHybridization(), ATOM_FEATURES['hybridization']) + \
         #     [1 if atom.GetIsAromatic() else 0]
-        # --- Get the values of all the atom features and add all up to the feature vector
-        features = one_hot_encoding(atom.GetAtomicNum(), ATOM_FEATURES['atomic_num']) + \
-            one_hot_encoding(atom.GetDegree(), ATOM_FEATURES['degree']) + \
-            one_hot_encoding(atom.GetTotalNumHs(), ATOM_FEATURES['num_Hs']) + \
-            one_hot_encoding(num_Os, ATOM_FEATURES['num_Os']) + \
-            one_hot_encoding(atom.GetHybridization(), ATOM_FEATURES['hybridization']) + \
-            [1 if atom.GetIsAromatic() else 0]
 
-    return features        
+    return features
 
 def get_bond_features(bond) -> List[Union[bool, int, float]]:
     '''
@@ -133,7 +134,7 @@ def count_atoms(mol, atomic_num):
     text
     '''
 
-    # --- 
+    # ---
     num_atoms = 0
     for atom in mol.GetAtoms():
         if atom.GetAtomicNum() == atomic_num:
@@ -149,7 +150,7 @@ class XASDataset_mol(InMemoryDataset):
     def __init__(self, root, transform=None, pre_transform=None, pre_filter=None):
         super().__init__(root, transform, pre_transform, pre_filter)
         self.data, self.slices = torch.load(self.processed_paths[0])
- 
+
     @property
     def raw_file_names(self):
         # return ['data_coronene.json']
@@ -157,8 +158,9 @@ class XASDataset_mol(InMemoryDataset):
 
     @property
     def processed_file_names(self):
+        # return ['cor_xasnet.pt']
         return ['circ_xasnet.pt']
-    
+
     def process(self):
         '''
         Text
@@ -175,16 +177,16 @@ class XASDataset_mol(InMemoryDataset):
         all_names = list(dictionaires[0].keys())
         print(f'Total number of molecules {len(all_names)}')
 
-        # --- 
+        # ---
         idx = 0
-        
+
         for name in all_names:
             # --- 
             smiles = dictionaires[0][name]
             mol = Chem.MolFromSmiles(smiles)
             # ---
             atom_spec = dictionaires[1][name]
- 
+
             # # --- Create arrays of dataset
             # pos = dictionaires[0][name][1]
             # positions = np.array(pos)

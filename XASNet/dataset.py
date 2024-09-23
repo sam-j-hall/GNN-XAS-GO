@@ -152,12 +152,12 @@ class XASDataset_mol(InMemoryDataset):
  
     @property
     def raw_file_names(self):
-        return ['data_coronene_schnet.json']
+        return ['data_coronene.json']
         # return ['data_circumcoronene_schnet.json']
 
     @property
     def processed_file_names(self):
-        return ['cor_pyg.pt']
+        return ['cor_xasnet.pt']
     
     def process(self):
         '''
