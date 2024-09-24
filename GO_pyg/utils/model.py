@@ -23,7 +23,7 @@ def train_model(model, loader, optimizer, device):
 
         loss = nn.MSELoss()(pred, data.spectrum).float()
 
-        total_loss += loss.item() * data.num_graphs
+        total_loss += loss.item() / data.num_graphs
 
         loss.backward()
 
@@ -32,7 +32,7 @@ def train_model(model, loader, optimizer, device):
         # out = pred[0].detach().cpu().numpy()
         # true = data.spectrum[0].detach().cpu().numpy()
 
-    return total_loss / len(loader.dataset)#, embedding#, true, out
+    return total_loss #, embedding#, true, out
 
 def train_schnet(model, loader, optimizer, device):
     '''
@@ -76,12 +76,12 @@ def val_test(model, loader, device):
         
         loss = nn.MSELoss()(pred, data.spectrum)
 
-        total_loss += loss.item() * data.num_graphs
+        total_loss += loss.item() / data.num_graphs
 
         out = pred[0].detach().cpu().numpy()
         true = data.spectrum[0].detach().cpu().numpy()
 
-    return total_loss / len(loader.dataset)#, out, true
+    return total_loss #, out, true
 
 def val_schnet(model, loader, device):
     '''
