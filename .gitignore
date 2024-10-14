@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # ignore
 # python cache 
 __pycache__/
@@ -6,9 +5,3 @@ __pycache__/
 # pickle and pt data files
 *.pkl
 *.pt
-=======
-# Ignore
-__pycache__/ 
-*.py[cod]
-
->>>>>>> bcd400012d2f27415d4df073467a5d3960ee1b2b
