@@ -76,17 +76,17 @@ def get_atom_features(atom) -> List[Union[bool, int, float]]:
         for a in atom.GetNeighbors():
             if a.GetAtomicNum() == 8:
                 num_Os += 1.0
+        features = [atom.GetAtomicNum()] + [atom.GetDegree()] + [atom.GetTotalNumHs()] + [num_Os] + \
+            one_hot_encoding(atom.GetHybridization(), ATOM_FEATURES['hybridization']) + \
+            [1 if atom.GetIsAromatic() else 0] + \
+            [1 if atom.IsInRing() else 0]
+        # --- Get the values of all the atom features and add all up to the feature vector
         # features = one_hot_encoding(atom.GetAtomicNum(), ATOM_FEATURES['atomic_num']) + \
-        #     [atom.GetDegree()] + [atom.GetTotalNumHs()] + [num_Os] + \
+        #     one_hot_encoding(atom.GetDegree(), ATOM_FEATURES['degree']) + \
+        #     one_hot_encoding(atom.GetTotalNumHs(), ATOM_FEATURES['num_Hs']) + \
+        #     one_hot_encoding(num_Os, ATOM_FEATURES['num_Os']) + \
         #     one_hot_encoding(atom.GetHybridization(), ATOM_FEATURES['hybridization']) + \
         #     [1 if atom.GetIsAromatic() else 0]
-        # --- Get the values of all the atom features and add all up to the feature vector
-        features = one_hot_encoding(atom.GetAtomicNum(), ATOM_FEATURES['atomic_num']) + \
-            one_hot_encoding(atom.GetDegree(), ATOM_FEATURES['degree']) + \
-            one_hot_encoding(atom.GetTotalNumHs(), ATOM_FEATURES['num_Hs']) + \
-            one_hot_encoding(num_Os, ATOM_FEATURES['num_Os']) + \
-            one_hot_encoding(atom.GetHybridization(), ATOM_FEATURES['hybridization']) + \
-            [1 if atom.GetIsAromatic() else 0]
 
     return features        
 
@@ -103,13 +103,11 @@ def get_bond_features(bond) -> List[Union[bool, int, float]]:
     else:
         bt = bond.GetBondType()
         # --- Creat one-hot bond vector
-        fbond = [
-            int(bt == Chem.rdchem.BondType.SINGLE),
-            int(bt == Chem.rdchem.BondType.DOUBLE),
-            int(bt == Chem.rdchem.BondType.AROMATIC),
-            int(bond.GetIsConjugated() if bt is not None else 0),
-            int(bond.IsInRing() if bt is not None else 0)
-        ]
+        fbond = [1.0 if bt == Chem.rdchem.BondType.SINGLE else 0.0] + \
+                [1.0 if bt == Chem.rdchem.BondType.DOUBLE else 0.0] + \
+                [1.0 if bt == Chem.rdchem.BondType.AROMATIC else 0.0] + \
+                [1.0 if bond.GetIsConjugated() else 0.0] + \
+                [1.0 if bond.IsInRing() else 0.0]
 
 
     return fbond
@@ -157,7 +155,7 @@ class XASDataset_mol(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return ['cor_pyg.pt']
+        return ['cor_pyg_new.pt']
     
     def process(self):
         '''
@@ -215,7 +213,7 @@ class XASDataset_mol(InMemoryDataset):
             data_list.append(pyg_graph)
             idx += 1
 
-        random.Random(258).shuffle(data_list)
+        random.Random(74).shuffle(data_list)
 
         if self.pre_filter is not None:
             data_list = [data for data in data_list if self.pre_filter(data)]
