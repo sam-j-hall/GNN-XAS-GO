@@ -5,3 +5,4 @@ __pycache__/
 # pickle and pt data files
 *.pkl
 *.pt
+lightning_logs
