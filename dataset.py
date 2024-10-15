@@ -153,13 +153,13 @@ class XASDataset_mol(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        # return ['data_coronene.json']
-        return ['data_circumcoronene.json']
+        return ['data_coronene.json']
+        # return ['data_circumcoronene.json']
 
     @property
     def processed_file_names(self):
-        # return ['cor_xasnet.pt']
-        return ['circ_xasnet.pt']
+        return ['cor_xasnet.pt']
+        # return ['circ_xasnet.pt']
 
     def process(self):
         '''
