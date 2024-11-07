@@ -18,7 +18,7 @@ def pred_spec(model, index, test_dataset, graphnet):
         if graphnet == True:
             pred = model(index[1])
         else:
-            pred = model(x, edge_index, edge_attr, batch)
+            pred = model(x, edge_index, batch)
 
     # --- Access the predicted output for the single graph
     true_spectrum = test_dataset[index[0]].spectrum.cpu().numpy()
