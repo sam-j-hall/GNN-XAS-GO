@@ -38,8 +38,8 @@ class GNN(torch.nn.Module):
             raise ValueError("Number of GNN layers must be greater than 1.")
 
         # --- Create the GNN
-        self.gnn_node = GNN_node(num_layer, in_channels, out_channels, gnn_type=gnn_type, 
-                                 heads=heads, drop_ratio=drop_ratio)
+        self.gnn_node = GNN_node(self.num_layer, self.in_channels, self.out_channels, gnn_type=self.gnn_type, 
+                                 heads=self.heads, drop_ratio=self.drop_ratio)
         
         # --- Choose the selected pooling function
         if self.graph_pooling == "sum":
