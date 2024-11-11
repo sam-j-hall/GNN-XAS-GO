@@ -28,6 +28,7 @@ class GNN(torch.nn.Module):
         self.drop_ratio = drop_ratio
         self.num_tasks = num_tasks
         self.graph_pooling = graph_pooling
+        self.gnn_type = gnn_type
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.heads = heads

@@ -10,6 +10,7 @@ def train_model(model, loader, optimizer, device):
     model.train()
 
     total_loss = 0
+    num_graphs = 0
 
     for data in loader:
         data = data.to(device)
@@ -18,12 +19,13 @@ def train_model(model, loader, optimizer, device):
 
         pred = model(data)
         
-        data_size = data.spectrum.shape[0] // 200
-        data.spectrum = data.spectrum.view(data_size, 200)
+        # data_size = data.spectrum.shape[0] // 200
+        # data.spectrum = data.spectrum.view(data_size, 200)
 
-        loss = nn.MSELoss()(pred, data.spectrum).float()
+        loss = nn.MSELoss()(pred.flatten(), data.spectrum)
 
-        total_loss += loss.item() / data.num_graphs
+        total_loss += loss.item()
+        num_graphs += data.num_graphs
 
         loss.backward()
 
@@ -32,7 +34,7 @@ def train_model(model, loader, optimizer, device):
         # out = pred[0].detach().cpu().numpy()
         # true = data.spectrum[0].detach().cpu().numpy()
 
-    return total_loss #, embedding#, true, out
+    return total_loss / num_graphs #, embedding#, true, out
 
 def train_schnet(model, loader, optimizer, device):
     '''
@@ -65,23 +67,25 @@ def val_test(model, loader, device):
     model.eval()
 
     total_loss = 0
+    num_graphs = 0
 
     for data in loader:
         data = data.to(device)
 
         pred = model(data)
 
-        data_size = data.spectrum.shape[0] // 200
-        data.spectrum = data.spectrum.view(data_size, 200)
+        # data_size = data.spectrum.shape[0] // 200
+        # data.spectrum = data.spectrum.view(data_size, 200)
         
-        loss = nn.MSELoss()(pred, data.spectrum)
+        loss = nn.MSELoss()(pred.flatten(), data.spectrum)
 
-        total_loss += loss.item() / data.num_graphs
+        total_loss += loss.item()
+        num_graphs += data.num_graphs
 
-        out = pred[0].detach().cpu().numpy()
-        true = data.spectrum[0].detach().cpu().numpy()
+        # out = pred[0].detach().cpu().numpy()
+        # true = data.spectrum[0].detach().cpu().numpy()
 
-    return total_loss #, out, true
+    return total_loss / num_graphs #, out, true
 
 def val_schnet(model, loader, device):
     '''
