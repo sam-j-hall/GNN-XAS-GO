@@ -7,37 +7,38 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch_geometric.nn import global_add_pool, global_mean_pool, global_max_pool
 from torch_geometric.nn import GCNConv, GINConv, GINEConv, GATv2Conv, MLP, SAGEConv
 # --- Lightning
-import lightning as L
+import pytorch_lightning as pl
 
-class GNN_model(L.LightningModule):
+class GNN_model(pl.LightningModule):
     '''
         Graph neural network class to run various types of GNNs
     '''
-    def __init__(self, config, data_dir=None):
+    def __init__(self, num_tasks, num_layers=4, in_channels=[33,100,100,100], out_channels=[100,100,100,100],
+                 gnn_type='gcn', heads=None, drop_ratio=0.5, graph_pooling="sum", learning_rate=0.01):
         '''
             Args:
                 num_tasks (int): number of labels to be predicted
-                num_layer (int): number of layers in the NN
+                num_layers (int): number of layers in the NN
                 in_channels (list): size of each input layer
                 out_channels (list): size of each output layer
                 gnn_type (str): the specific GNN to use
                 heads (int): number of heads
                 drop_ratio (float): the drop_ratio 
                 graph_pooling (str): the pooling function for the GNN
+                learning_rate (float): the learning rate for model
         '''
 
         super(GNN_model, self).__init__()
 
-        self.num_tasks = config["num_tasks"]
-        self.num_layer = config["num_layer"]
-        self.in_channels = config["in_channels"]
-        self.out_channels = config["out_channels"]
-        self.gnn_type = config["gnn_type"]
-        self.heads = config["heads"]
-        self.drop_ratio = config["drop_ratio"]
-        self.graph_pooling = config["graph_pooling"]
-        self.lr = config["lr"]
-        self.data_dir = data_dir
+        self.num_tasks = num_tasks
+        self.num_layers = num_layers
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.gnn_type = gnn_type
+        self.heads = heads
+        self.drop_ratio = drop_ratio
+        self.graph_pooling = graph_pooling
+        self.lr = learning_rate
 
         self._initialize_weights()
         self.save_hyperparameters()
@@ -46,12 +47,12 @@ class GNN_model(L.LightningModule):
         self.batch_norms = torch.nn.ModuleList()
 
         # --- Sanity check number of layers
-        if self.num_layer < 2:
+        if self.num_layers < 2:
             raise ValueError("Number of GNN layers must be greater than 1.")
 
         # --- Set up GNN layers
         # --- Select the messgage passing layer
-        for i, in_c, out_c in zip(range(self.num_layer), self.in_channels, self.out_channels):
+        for i, in_c, out_c in zip(range(self.num_layers), self.in_channels, self.out_channels):
             self.convs.append(GCNConv(in_c, out_c))
             self.batch_norms.append(torch.nn.BatchNorm1d(out_c))
         # --- Select the pooling function
@@ -70,13 +71,13 @@ class GNN_model(L.LightningModule):
         h_list = [x]
 
         # --- Pass through GNN layers
-        for layer in range(self.num_layer):
+        for layer in range(self.num_layers):
             # --- Message passing layer
             h = self.convs[layer](h_list[layer], edge_index)
             # --- Batch normalization
             h = self.batch_norms[layer](h)
             # --- Dropout with/without relu
-            if layer == self.num_layer - 1:
+            if layer == self.num_layers - 1:
                 # --- Remove relu for the last layer
                 h = F.dropout(h, self.drop_ratio, training = self.training)
             else:
@@ -98,14 +99,14 @@ class GNN_model(L.LightningModule):
         data = train_batch
         spec_hat = self(data)
         loss = F.mse_loss(spec_hat.view(-1, 1), data.spectrum.view(-1, 1))
-        self.log('train_loss', loss)
+        self.log('train_loss', loss, batch_size=len(data))
         return loss
     
     def validation_step(self, val_batch, batch_idx):
         data = val_batch
         spec_hat = self(data)
         loss = F.mse_loss(spec_hat.view(-1, 1), data.spectrum.view(-1, 1))
-        self.log('val_loss', loss)
+        self.log('val_loss', loss, batch_size=len(data))
         return loss
     
     def test_step(self, test_batch, batch_idx):
