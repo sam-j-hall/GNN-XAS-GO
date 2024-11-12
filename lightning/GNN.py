@@ -65,7 +65,7 @@ class GNN_model(pl.LightningModule):
 
         x = batched_data.x.float()
         edge_index = batched_data.edge_index
-        edge_attr = batched_data.edge_attr.float()
+        edge_attr = batched_data.edge_attr
 
         # --- Create list of features
         h_list = [x]
