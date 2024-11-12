@@ -28,7 +28,7 @@ BOND_FEATURES = {
     ]
 }
 
-def mol_to_nx(mol, spec, atom_rep=True):
+def mol_to_nx(mol, spec):
     '''
     text
     '''
@@ -50,12 +50,11 @@ def mol_to_nx(mol, spec, atom_rep=True):
         # --- Add edge to graph and create one-hot encoding vector of bond features
         G.add_edge(begin, end, edge_attr=get_bond_features(bond))
 
-    if atom_rep == False:
-        # Normalize spectra to 1.0
-        max_intensity = np.max(spec)
-        norm_spec = 1.0 * (spec / max_intensity)
-        # Set spectra to graph
-        G.graph['spectrum'] = torch.FloatTensor(norm_spec)
+    # Normalize spectra to 1.0
+    max_intensity = np.max(spec)
+    norm_spec = 1.0 * (spec / max_intensity)
+    # Set spectra to graph
+    G.graph['spectrum'] = torch.FloatTensor(norm_spec)
         
     return G
     
@@ -166,7 +165,7 @@ class XASMolDataset(InMemoryDataset):
                 # Sum up all atomic spectra
                 tot_spec += atom_spec[key]
 
-            gx = mol_to_nx(mol, tot_spec, atom_rep=False)
+            gx = mol_to_nx(mol, tot_spec)
             pyg_graph = from_networkx(gx)
 
             pyg_graph.idx = idx
