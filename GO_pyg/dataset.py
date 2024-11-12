@@ -221,3 +221,79 @@ class XASMolDataset(InMemoryDataset):
 
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
+
+class SchNetDataset(InMemoryDataset):
+    '''
+    Text
+    '''
+
+    def __init__(self, root, transform=None, pre_transform=None, pre_filter=None):
+        super().__init__(root, transform, pre_transform, pre_filter)
+        self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
+ 
+    @property
+    def raw_file_names(self):
+        return ['data_coronene.json']
+        # return ['data_circumcoronene.json']
+
+    @property
+    def processed_file_names(self):
+        return ['coronene_schnet.pt']
+    
+    def process(self):
+        '''
+        Text
+        '''
+
+        # List to store data
+        data_list = []
+
+        # Load the raw data from json file
+        dat = codecs.open(self.raw_paths[0], 'r', encoding='utf-8')
+        dictionaires = json.load(dat)
+
+        # Create list with all the molecule names
+        all_names = list(dictionaires[0].keys())
+        print(f'Total number of molecules {len(all_names)}')
+
+        # --- 
+        idx = 0
+        
+        for name in all_names:
+            # Get pos and z data
+            pos = torch.Tensor(dictionaires[2][name][0])
+            z = torch.Tensor(dictionaires[2][name][1]).long()
+
+            smiles = dictionaires[0][name]
+            mol = Chem.MolFromSmiles(smiles)
+            atom_spec = dictionaires[1][name]
+
+            tot_spec = np.zeros(len(atom_spec[str(0)]))
+            for key in atom_spec.keys():
+                tot_spec += atom_spec[key]
+
+            # Normalise spectrum to 1
+            max_int = np.max(tot_spec)
+            norm_spec = 1.0 * (tot_spec / max_int)
+            norm_spec = np.float32(norm_spec)
+
+            # gx = mol_to_nx(mol, tot_spec)
+            gx = nx.Graph()
+            pyg_graph = from_networkx(gx)
+            pyg_graph.x = z.long
+            pyg_graph.pos = pos
+            pyg_graph.spectrum = torch.Tensor(norm_spec)
+            pyg_graph.idx = idx
+            pyg_graph.smiles = smiles
+
+            data_list.append(pyg_graph)
+            idx += 1
+
+        if self.pre_filter is not None:
+            data_list = [data for data in data_list if self.pre_filter(data)]
+
+        if self.pre_transform is not None:
+            data_list = [self.pre_transform(data) for data in data_list]
+
+        data, slices = self.collate(data_list)
+        torch.save((data, slices), self.processed_paths[0])

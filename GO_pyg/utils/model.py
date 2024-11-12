@@ -36,28 +36,6 @@ def train_model(model, loader, optimizer, device):
 
     return total_loss / num_graphs #, embedding#, true, out
 
-def train_schnet(model, loader, optimizer, device):
-    '''
-    '''
-
-    model.train()
-
-    total_loss = 0
-
-    for data in loader:
-        data = data.to(device)
-        optimizer.zero_grad()
-        z = data.z
-        pos = data.x.float()
-        pred = model(z, pos, data.batch)
-        # data_size = data.spectrum.shape[0] // 200
-        # data.spectrum = data.spectrum.view(data_size, 200)
-        loss = nn.MSELoss()(pred, data.spectrum).float()
-        total_loss += loss.item() / data.num_graphs
-        loss.backward()
-        optimizer.step()
-
-        return total_loss
 
 def val_test(model, loader, device):
     '''
@@ -87,22 +65,51 @@ def val_test(model, loader, device):
 
     return total_loss / num_graphs #, out, true
 
-def val_schnet(model, loader, device):
+def train_schnet(model, train_loader, optimizer, device):
+
+    model.train()
+
+    total_loss = 0
+    num_graphs = 0
+
+    for batch in train_loader:
+        batch = batch.to(device)
+
+        optimizer.zero_grad()
+
+        pred = model(batch.pos, batch.x, batch.batch)
+
+        loss = nn.MSELoss()(pred.flatten(), batch.spectrum)
+
+        total_loss += loss.item()
+        num_graphs += batch.num_graphs
+
+        loss.backwards()
+
+        optimizer.step()
+
+    return total_loss / num_graphs
+
+def val_schnet(model, val_loader, device):
     '''
     '''
 
     model.eval()
+   
     total_loss = 0
-    for data in loader:
-        data = data.to(device)
-        z = data.z
-        pos = data.x.float()
-        pred = model(z, pos, data.batch)
-        # data_size = data.spectrum.shape[0] // 200
-        # data.spectrum = data.spectrum.view(data_size, 200)
-        loss = nn.MSELoss()(pred, data.spectrum)
-        total_loss += loss.item() * data.num_graphs
-        return total_loss / len(loader.dataset)
+    num_graphs = 0
+
+    for batch in val_loader:
+        batch = batch.to(device)
+
+        pred = model(batch.pos, batch.x, batch.batch)
+
+        loss = nn.MSELoss()(pred.flatten(), batch.spectrum)
+
+        total_loss = loss.item()
+        num_graphs = batch.num_graphs
+
+    return total_loss / num_graphs
 
 
 def get_spec_prediction(model, index, dataset, device):
