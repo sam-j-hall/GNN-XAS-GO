@@ -30,7 +30,12 @@ BOND_FEATURES = {
 
 def mol_to_nx(mol, spec):
     '''
-    text
+    Creates a PyG graph object with corresponding spectra
+    from a RDKit molecule
+
+    :param mol: An RDKit molecule
+    :param spec: A numpy array of the XAS
+    :return G: A PyG graph object
     '''
 
     # Create graph object
@@ -131,7 +136,8 @@ class XASMolDataset(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return ['coronene_pyg_mol.pt']
+        return ['coronene_pyg.pt']
+        # return ['circumcoronene_pyg.pt']
     
     def process(self):
         '''
