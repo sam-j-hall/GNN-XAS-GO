@@ -3,7 +3,7 @@ import os.path as osp
 from typing import Optional, Callable, Tuple, Dict
 import warnings
 import numpy as np
-# --- PyTorch
+# PyTorch
 import torch
 from torch import Tensor
 import torch.nn.functional as F
@@ -11,14 +11,14 @@ import torch.nn as nn
 from torch.nn import ModuleList, Sequential, Embedding, Linear
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-# --- PyG
+# PyG
 from torch_geometric.io import fs
 from torch_geometric.nn import global_add_pool, global_mean_pool, global_max_pool, SumAggregation
 from torch_geometric.nn.resolver import aggregation_resolver as aggr_resolver
 from torch_geometric.nn import GCNConv, GINConv, GINEConv, GATv2Conv, MLP, SAGEConv
 from torch_geometric.data import Dataset, download_url, extract_zip
 from torch_geometric.typing import OptTensor
-# --- Lightning
+# Lightning
 import lightning as L
 from utils.functions import RSE_loss
 from utils.schnet import RadiusInteractionGraph, InteractionBlock, CFConv, GaussianSmearing, ShiftedSoftplus
@@ -60,18 +60,44 @@ class GNN_model(L.LightningModule):
         self.convs = torch.nn.ModuleList()
         self.batch_norms = torch.nn.ModuleList()
 
-        # --- Sanity check number of layers
+        # Sanity check number of layers
         if self.num_layers < 2:
             raise ValueError("Number of GNN layers must be greater than 1.")
+        
+        # Choose the selected pooling function
+        if self.graph_pooling == "sum":
+            self.pool = global_add_pool
+        elif self.graph_pooling == "mean":
+            self.pool = global_mean_pool
+        elif self.graph_pooling == "max":
+            self.pool = global_max_pool
+        else:
+            raise ValueError("Invalid graph pooling type")
 
-        # --- Set up GNN layers
-        # --- Select the messgage passing layer
+        # Set up GNN layers
+        # Select the messgage passing layer
         for i, in_c, out_c in zip(range(self.num_layers), self.in_channels, self.out_channels):
-            self.convs.append(GCNConv(in_c, out_c))
+            if gnn_type == "gin":
+                mlp = MLP([in_c, in_c, out_c])
+                self.convs.append(GINConv(nn=mlp, train_eps=False))
+            elif gnn_type == "gine":
+                mlp = MLP([in_c, out_c, out_c])
+                self.convs.append(GINEConv(nn=mlp, eps=0.5, train_eps=True, edge_dim=5))
+            elif gnn_type == "gcn":
+                self.convs.append(GCNConv(in_c, out_c))
+            elif gnn_type == "gat":
+                if i == 1:
+                    self.convs.append(GATv2Conv(int(in_c), out_c, heads=int(heads), edge_dim=5))
+                else:
+                    self.convs.append(GATv2Conv(int(in_c*heads), out_c, heads=int(heads), edge_dim=5))
+            elif gnn_type == "sage":
+                self.convs.append(SAGEConv(in_c, out_c, aggr='mean'))
+            else:
+                ValueError("Undefiend GNN type called {gnn_type}")
+
             self.batch_norms.append(torch.nn.BatchNorm1d(out_c))
-        # --- Select the pooling function
-        self.pool = global_mean_pool
-        # --- Final linear layer
+
+        # Final linear layer
         self.graph_pred_linear = torch.nn.Linear(self.out_channels[-1], self.num_tasks)      	
 
 
@@ -81,30 +107,33 @@ class GNN_model(L.LightningModule):
         edge_index = batched_data.edge_index
         edge_attr = batched_data.edge_attr
 
-        # --- Create list of features
+        # Create list of features
         h_list = [x]
 
-        # --- Pass through GNN layers
+        # Pass through GNN layers
         for layer in range(self.num_layers):
-            # --- Message passing layer
-            h = self.convs[layer](h_list[layer], edge_index)
-            # --- Batch normalization
+            # Use edge_attr for required gnn types
+            if self.gnn_type == 'gine' or self.gnn_type == 'gat':
+                h = self.convs[layer](h_list[layer], edge_index, edge_attr=edge_attr)
+            else:
+                h = self.convs[layer](h_list[layer], edge_index)
+            # Batch normalization
             h = self.batch_norms[layer](h)
-            # --- Dropout with/without relu
+            # Dropout with/without relu
             if layer == self.num_layers - 1:
-                # --- Remove relu for the last layer
+                # Remove relu for the last layer
                 h = F.dropout(h, self.drop_ratio, training = self.training)
             else:
                 h = F.dropout(F.relu(h), self.drop_ratio, training = self.training)
 
             h_list.append(h)
-        # --- Final node representation from GNN
+        # Final node representation from GNN
         node_rep = h_list[-1]
-        # --- Pool all atom node representation for grap rep
+        # Pool all atom node representation for grap rep
         graph_embedding = self.pool(node_rep, batched_data.batch)
-        # --- Activation function
+        # Activation function
         p = torch.nn.LeakyReLU(0.1)
-        # --- Pass through linear layer
+        # Pass through linear layer
         out = p(self.graph_pred_linear(graph_embedding))
 
         return out
