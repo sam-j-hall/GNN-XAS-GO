@@ -285,6 +285,7 @@ class SchNet(L.LightningModule):
         mean: Optional[float] = None,
         std: Optional[float] = None,
         atomref: OptTensor = None,
+        learning_rate: float = 0.01
     ):
         super().__init__()
 
@@ -300,6 +301,7 @@ class SchNet(L.LightningModule):
         self.std = std
         self.scale = None
         self.a_emb = a_emb
+        self.lr = learning_rate
         self._initialize_weights()
         self.save_hyperparameters()
 
@@ -547,7 +549,7 @@ class SchNet(L.LightningModule):
     
     def configure_optimizers(self):
         optimizer = Adam(self.parameters(),
-                         lr=0.001,
+                         lr=self.lr,
                          betas=(0.9, 0.999), 
                          eps=1e-08, 
                          amsgrad=True)

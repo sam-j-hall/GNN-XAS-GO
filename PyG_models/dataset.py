@@ -205,7 +205,7 @@ class SchNetDataset(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return ['coronene_schnet_mol.pt']
+        return ['coronene_schnet.pt']
     
     def process(self):
         '''
