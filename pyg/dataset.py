@@ -132,7 +132,7 @@ class XASMolDataset(InMemoryDataset):
     @property
     def raw_file_names(self):
         return ['data_coronene.json']
-        # return ['data_circumcoronene_schnet.json']
+        # return ['data_circumcoronene.json']
 
     @property
     def processed_file_names(self):
