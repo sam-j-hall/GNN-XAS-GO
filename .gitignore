@@ -3,7 +3,6 @@
 __pycache__/
 *.py[cod]
 # pickle and pt data files
-*.pkl
 *.pt
 *.npz
 lightning_logs
