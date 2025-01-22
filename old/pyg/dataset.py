@@ -28,7 +28,7 @@ BOND_FEATURES = {
     ]
 }
 
-def mol_to_nx(mol, spec):
+def mol_to_nx(mol):
     '''
     Creates a PyG graph object with corresponding spectra
     from a RDKit molecule
@@ -55,11 +55,11 @@ def mol_to_nx(mol, spec):
         # --- Add edge to graph and create one-hot encoding vector of bond features
         G.add_edge(begin, end, edge_attr=get_bond_features(bond))
 
-    # Normalize spectra to 1.0
-    max_intensity = np.max(spec)
-    norm_spec = 1.0 * (spec / max_intensity)
-    # Set spectra to graph
-    G.graph['spectrum'] = torch.FloatTensor(norm_spec)
+    # # Normalize spectra to 1.0
+    # max_intensity = np.max(spec)
+    # norm_spec = 1.0 * (spec / max_intensity)
+    # # Set spectra to graph
+    # G.graph['spectrum'] = torch.FloatTensor(norm_spec)
         
     return G
     
@@ -131,13 +131,13 @@ class XASMolDataset(InMemoryDataset):
  
     @property
     def raw_file_names(self):
-        return ['data_coronene.json']
-        # return ['data_circumcoronene.json']
+        # return ['data_coronene.json']
+        return ['data_circumcoronene.json']
 
     @property
     def processed_file_names(self):
-        return ['coronene_pyg.pt']
-        # return ['circumcoronene_pyg.pt']
+        # return ['coronene_pyg.pt']
+        return ['circumcoronene_pyg.pt']
     
     def process(self):
         '''
@@ -171,8 +171,14 @@ class XASMolDataset(InMemoryDataset):
                 # Sum up all atomic spectra
                 tot_spec += atom_spec[key]
 
-            gx = mol_to_nx(mol, tot_spec)
+            gx = mol_to_nx(mol)
             pyg_graph = from_networkx(gx)
+
+            # Normalize spectra to 1.0
+            max_intensity = np.max(tot_spec)
+            norm_spec = 1.0 * (tot_spec / max_intensity)
+            # Set spectra to graph
+            pyg_graph.spectrum = torch.FloatTensor(norm_spec)
 
             pyg_graph.idx = idx
             pyg_graph.smiles = smiles
@@ -251,6 +257,97 @@ class SchNetDataset(InMemoryDataset):
 
             data_list.append(pyg_graph)
             idx += 1
+
+        if self.pre_filter is not None:
+            data_list = [data for data in data_list if self.pre_filter(data)]
+
+        if self.pre_transform is not None:
+            data_list = [self.pre_transform(data) for data in data_list]
+
+        data, slices = self.collate(data_list)
+        torch.save((data, slices), self.processed_paths[0])
+
+class XASAtomDataset(InMemoryDataset):
+    '''
+    Text
+    '''
+
+    def __init__(self, root, transform=None, pre_transform=None, pre_filter=None):
+        super().__init__(root, transform, pre_transform, pre_filter)
+        self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
+ 
+    @property
+    def raw_file_names(self):
+        return ['data_coronene.json']
+        # return ['data_circumcoronene.json']
+
+    @property
+    def processed_file_names(self):
+        return ['coronene_pyg_atom.pt']
+        # return ['circumcoronene_pyg.pt']
+    
+    def process(self):
+        '''
+        Text
+        '''
+
+        # List to store data
+        data_list = []
+
+        # Load the raw data from json file
+        dat = codecs.open(self.raw_paths[0], 'r', encoding='utf-8')
+        dictionaires = json.load(dat)
+
+        # Create list with all the molecule names
+        all_names = list(dictionaires[0].keys())
+        print(f'Total number of molecules {len(all_names)}')
+
+        # --- 
+        idx = 0
+        
+        for name in all_names:
+            # 
+            smiles = dictionaires[0][name]
+            mol = Chem.MolFromSmiles(smiles)
+            # 
+            atom_spec = dictionaires[1][name]
+
+            atom_count = 0
+            for atom in mol.GetAtoms():
+                atom_count += 1
+
+            spec_list = torch.zeros(atom_count, 200)
+
+            for atom in mol.GetAtoms():
+                if atom.GetAtomicNum() == 6:
+                    sp = atom_spec[str(atom.GetIdx())]
+                    spec_list[atom.GetIdx()] = torch.DoubleTensor(sp)
+
+            gx = mol_to_nx(mol)
+            pyg_graph = from_networkx(gx)
+            pyg_graph.spectrum = spec_list
+            pyg_graph.idx = idx
+            pyg_graph.smiles = smiles
+            pyg_graph.mol = name
+            data_list.append(pyg_graph)
+            idx += 1
+
+
+            # #
+            # for atom in mol.GetAtoms():
+            #     if atom.GetAtomicNum() == 6:
+            #         spec = atom_spec[str(atom.GetIdx())]
+
+
+            #     gx = mol_to_nx(mol)
+            #     pyg_graph = from_networkx(gx)
+            #     pyg_graph.spectrum = torch.FloatTensor(spec)
+            #     pyg_graph.atom_num = atom.GetIdx()
+            #     pyg_graph.idx = idx
+            #     pyg_graph.smiles = smiles
+            #     pyg_graph.mol = name
+            #     data_list.append(pyg_graph)
+            #     idx += 1
 
         if self.pre_filter is not None:
             data_list = [data for data in data_list if self.pre_filter(data)]
