@@ -117,13 +117,11 @@ class XASMolDataset(InMemoryDataset):
  
     @property
     def raw_file_names(self):
-        return ['data_coronene_voigt.pkl']
-        # return ['data_circumcoronene.json']
+        return ['data_coronene.pkl']
 
     @property
     def processed_file_names(self):
-        return ['coronene_pyg_voigt.pt']
-        # return ['circumcoronene_pyg.pt']
+        return ['coronene_pyg.pt']
     
     def process(self):
         '''
