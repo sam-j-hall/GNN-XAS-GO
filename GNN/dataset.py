@@ -117,11 +117,11 @@ class XASMolDataset(InMemoryDataset):
  
     @property
     def raw_file_names(self):
-        return ['data_coronene.pkl']
+        return ['data_coronene_new.pkl']
 
     @property
     def processed_file_names(self):
-        return ['coronene_pyg.pt']
+        return ['coronene_pyg_new.pt']
     
     def process(self):
         '''
@@ -140,7 +140,7 @@ class XASMolDataset(InMemoryDataset):
         print(f'Total number of molecules {len(dat_df)}')
 
         # --- 
-        idx = 0
+        idx = 0       
         
         for index, row in dat_df.iterrows():
             # Read RDKit mol from smiles
