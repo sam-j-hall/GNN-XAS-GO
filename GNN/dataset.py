@@ -69,7 +69,6 @@ def get_atom_features(atom) -> List[Union[bool, int, float]]:
     # For one-hot encoding featue vector
     # Get the values of all the atom features and add all up to the feature vector
     atom_feat = one_hot_encoding(atom.GetAtomicNum(), ATOM_FEATURES['atomic_num']) + \
-        one_hot_encoding(atom.GetDegree(), ATOM_FEATURES['degree']) + \
         one_hot_encoding(atom.GetTotalNumHs(), ATOM_FEATURES['num_Hs']) + \
         one_hot_encoding(atom.GetHybridization(), ATOM_FEATURES['hybridization']) + \
         [1.0 if atom.GetIsAromatic() else 0.0]
@@ -117,11 +116,11 @@ class XASMolDataset(InMemoryDataset):
  
     @property
     def raw_file_names(self):
-        return ['data_coronene_new.pkl']
+        return ['data_coronene.pkl']
 
     @property
     def processed_file_names(self):
-        return ['coronene_pyg_new.pt']
+        return ['coronene_pyg_short.pt']
     
     def process(self):
         '''
