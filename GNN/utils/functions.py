@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from bokeh.plotting import figure
-from bokeh.models import SingleIntervalTicker, LinearAxis, NumeralTickFormatter, Span
+from bokeh.models import Span, ContinuousTicker, LinearAxis
 from bokeh.palettes import HighContrast3
 
 def get_spec_prediction(model, data, device):
@@ -69,10 +69,10 @@ def bokeh_spectra(pred_spectra, true_spectra):
 
     return p
 
-def bokeh_hist(dataframe, average):
+def bokeh_hist(series, hist, edges, spacing):
     p = figure(
         x_axis_label = 'RSE value', y_axis_label = 'Frequency',
-        # x_range = (edges[0], edges[-1]), y_range = (0, max(hist)+spacing),
+        x_range = (edges[0], edges[-1]), y_range = (0, max(hist)+spacing),
         width = 500, height = 450,
         outline_line_color = 'black', outline_line_width = 2
     )
@@ -108,17 +108,12 @@ def bokeh_hist(dataframe, average):
     p.grid.grid_line_width = 1.5
     p.grid.grid_line_dash = "dashed"
 
-    # Format x-axis
-    ticker = SingleIntervalTicker(interval=20)
-    xaxis = LinearAxis(ticker=ticker)
-    p.add_layout(xaxis, 'below')
-
     # Plot data
     # Add histogram
-    p.quad(bottom=0, top=dataframe['rse_value'], left=dataframe['left'], right=dataframe['right'],
-           fill_color='skyblue', line_color='black')
+    p.quad(bottom=0, top=hist, left=edges[:-1], right=edges[1:],
+           fill_color='skyblue', line_color='black')    
     # Add average line
-    vline = Span(location=average, dimension='height', line_color='black', line_width=3, line_dash='dashed')
+    vline = Span(location=series.mean(), dimension='height', line_color='dodgerblue', line_width=3, line_dash='dashed')
     p.renderers.extend([vline])
 
     p.output_backend = 'svg'
