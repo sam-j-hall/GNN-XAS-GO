@@ -38,6 +38,7 @@ def bokeh_spectra(pred_spectra, true_spectra):
     p.xaxis.ticker.desired_num_ticks = 3
     p.xaxis.axis_label_text_font_size = '24px'
     p.xaxis.major_label_text_font_size = '24px'
+    p.xaxis.axis_label_text_font_style = 'normal'
     p.xaxis.major_tick_in = 0
     p.xaxis.major_tick_out = 10
     p.xaxis.minor_tick_out = 6
@@ -47,6 +48,7 @@ def bokeh_spectra(pred_spectra, true_spectra):
     p.xaxis.minor_tick_line_color = 'black'
     # y-axis settings
     p.yaxis.axis_label_text_font_size = '24px'
+    p.yaxis.axis_label_text_font_style = 'normal'
     p.yaxis.major_tick_line_color = None
     p.yaxis.minor_tick_line_color = None
     p.yaxis.major_label_text_color = None
@@ -85,6 +87,7 @@ def bokeh_hist(series, hist, edges, spacing):
     p.xaxis.ticker.desired_num_ticks = 3
     p.xaxis.axis_label_text_font_size = '24px'
     p.xaxis.major_label_text_font_size = '24px'
+    p.xaxis.axis_label_text_font_style = 'normal'
     p.xaxis.major_tick_in = 0
     p.xaxis.major_tick_out = 10
     p.xaxis.minor_tick_out = 6
@@ -96,6 +99,7 @@ def bokeh_hist(series, hist, edges, spacing):
     # y-axis settings
     p.yaxis.axis_label_text_font_size = '24px'
     p.yaxis.major_label_text_font_size = '24px'
+    p.yaxis.axis_label_text_font_style = 'normal'
     p.yaxis.major_tick_in = 0
     p.yaxis.major_tick_out = 10
     p.yaxis.major_tick_line_width = 2
