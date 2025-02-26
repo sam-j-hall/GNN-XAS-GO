@@ -12,9 +12,6 @@ from typing import List, Union
 # Node features
 ATOM_FEATURES = {
     'atomic_num': [6.0, 8.0],
-    'degree': [1, 2, 3, 4],
-    'num_Hs': [0.0, 1.0, 2.0],
-    'num_Os': [0.0, 1.0, 2.0],
     'hybridization': [
         Chem.rdchem.HybridizationType.SP2,
         Chem.rdchem.HybridizationType.SP3
@@ -69,9 +66,9 @@ def get_atom_features(atom) -> List[Union[bool, int, float]]:
     # For one-hot encoding featue vector
     # Get the values of all the atom features and add all up to the feature vector
     atom_feat = one_hot_encoding(atom.GetAtomicNum(), ATOM_FEATURES['atomic_num']) + \
-        one_hot_encoding(atom.GetTotalNumHs(), ATOM_FEATURES['num_Hs']) + \
         one_hot_encoding(atom.GetHybridization(), ATOM_FEATURES['hybridization']) + \
-        [1.0 if atom.GetIsAromatic() else 0.0]
+        [1.0 if atom.GetIsAromatic() else 0.0] + \
+        [atom.GetTotalNumHs()]
 
     return atom_feat       
 
@@ -120,7 +117,7 @@ class XASMolDataset(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return ['coronene_pyg_short.pt']
+        return ['coronene_pyg.pt']
     
     def process(self):
         '''
