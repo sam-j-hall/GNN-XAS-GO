@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from bokeh.plotting import figure
-from bokeh.models import Span, ContinuousTicker, LinearAxis
+from bokeh.models import Span
 from bokeh.palettes import HighContrast3
 
 def get_spec_prediction(model, data, device):
@@ -34,7 +34,13 @@ def bokeh_spectra(pred_spectra, true_spectra):
     p.toolbar_location = None
     p.min_border = 25
 
-    # x-axis settings
+    # plot data
+    x = np.linspace(280,300,200)
+    p.line(x, true_spectra, line_width=3, line_color=HighContrast3[0], legend_label='True')
+    p.line(x, pred_spectra, line_width=3, line_color=HighContrast3[1], legend_label='ML Model')
+
+   # x-axis settings
+    p.xaxis.axis_line_width = 2
     p.xaxis.ticker.desired_num_ticks = 3
     p.xaxis.axis_label_text_font_size = '24px'
     p.xaxis.major_label_text_font_size = '24px'
@@ -47,6 +53,7 @@ def bokeh_spectra(pred_spectra, true_spectra):
     p.xaxis.major_tick_line_color = 'black'
     p.xaxis.minor_tick_line_color = 'black'
     # y-axis settings
+    p.yaxis.axis_line_width = 2
     p.yaxis.axis_label_text_font_size = '24px'
     p.yaxis.axis_label_text_font_style = 'normal'
     p.yaxis.major_tick_line_color = None
@@ -57,12 +64,6 @@ def bokeh_spectra(pred_spectra, true_spectra):
     p.grid.grid_line_alpha = 0.3
     p.grid.grid_line_width = 1.5
     p.grid.grid_line_dash = "dashed"
-
-    # plot data
-    x = np.linspace(280,300,200)
-    p.line(x, true_spectra, line_width=3, line_color=HighContrast3[0], legend_label='True')
-    p.line(x, pred_spectra, line_width=3, line_color=HighContrast3[1], legend_label='ML Model')
-
     # legend settings
     p.legend.location = 'bottom_right'
     p.legend.label_text_font_size = '20px'
@@ -83,8 +84,16 @@ def bokeh_hist(series, hist, edges, spacing):
     p.toolbar_location = None
     p.min_border = 25
 
+    # Plot data
+    # Add histogram
+    p.quad(bottom=0, top=hist, left=edges[:-1], right=edges[1:],
+           fill_color='skyblue', line_color='black')    
+    # Add average line
+    vline = Span(location=series.mean(), dimension='height', line_color='dodgerblue', line_width=3, line_dash='dashed')
+    p.renderers.extend([vline])
+
     # x-axis settings
-    p.xaxis.ticker.desired_num_ticks = 3
+    p.xaxis.axis_line_width = 2
     p.xaxis.axis_label_text_font_size = '24px'
     p.xaxis.major_label_text_font_size = '24px'
     p.xaxis.axis_label_text_font_style = 'normal'
@@ -95,8 +104,8 @@ def bokeh_hist(series, hist, edges, spacing):
     p.xaxis.minor_tick_line_width = 2
     p.xaxis.major_tick_line_color = 'black'
     p.xaxis.minor_tick_line_color = 'black'
-    p.xaxis[0].ticker.desired_num_ticks = 4
     # y-axis settings
+    p.yaxis.axis_line_width = 2
     p.yaxis.axis_label_text_font_size = '24px'
     p.yaxis.major_label_text_font_size = '24px'
     p.yaxis.axis_label_text_font_style = 'normal'
@@ -111,14 +120,6 @@ def bokeh_hist(series, hist, edges, spacing):
     p.grid.grid_line_alpha = 0.3
     p.grid.grid_line_width = 1.5
     p.grid.grid_line_dash = "dashed"
-
-    # Plot data
-    # Add histogram
-    p.quad(bottom=0, top=hist, left=edges[:-1], right=edges[1:],
-           fill_color='skyblue', line_color='black')    
-    # Add average line
-    vline = Span(location=series.mean(), dimension='height', line_color='dodgerblue', line_width=3, line_dash='dashed')
-    p.renderers.extend([vline])
 
     p.output_backend = 'svg'
 
