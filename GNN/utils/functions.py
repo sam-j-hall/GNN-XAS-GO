@@ -124,3 +124,33 @@ def bokeh_hist(series, hist, edges, spacing):
     p.output_backend = 'svg'
 
     return(p)
+
+def count_funct_groups(name):
+    '''
+    '''
+
+    # Empty list to store numbers
+    numbers = []
+    oh = 0
+    cooh = 0
+    keto = 0
+    cho = 0
+    epoxy = 0
+    # Extract numbers from mol name string
+    for char in name:
+        if char.isdigit():
+            numbers.append(int(char))
+
+    oh += numbers[0]
+    cooh += numbers[1]
+    epoxy += numbers[2]
+    cho += numbers[3]
+    keto += numbers[4]
+    oh += numbers[5]
+    epoxy += numbers[6]
+    epoxy += numbers[7]
+
+    tot_groups = oh + cooh + epoxy + cho + keto
+
+    
+    return oh, cooh, epoxy, cho, keto, tot_groups  
