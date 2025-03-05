@@ -22,7 +22,7 @@ def calculate_rse(target, prediction):
     denominator = np.sum(del_E * target)
     return np.sqrt(numerator) / denominator
 
-def bokeh_spectra(pred_spectra, true_spectra):
+def bokeh_spectra(pred_spectra, true_spectra, legend=False):
     p = figure(
     x_axis_label = 'Photon Energy (eV)', y_axis_label = 'arb. units',
     x_range = (280,300),
@@ -65,8 +65,11 @@ def bokeh_spectra(pred_spectra, true_spectra):
     p.grid.grid_line_width = 1.5
     p.grid.grid_line_dash = "dashed"
     # legend settings
-    p.legend.location = 'bottom_right'
-    p.legend.label_text_font_size = '20px'
+    if legend == True:
+        p.legend.location = 'bottom_right'
+        p.legend.label_text_font_size = '20px'
+    else:
+        p.legend.visible=False
 
     p.output_backend = 'svg'
 
